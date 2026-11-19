@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
+import Notes from "./pages/Notes";
 
 export default function App() {
   return (
@@ -26,6 +27,13 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/notes"
+        element={
+          <ProtectedRoute>
+            <Notes />
+          </ProtectedRoute>
+  }   />
     </Routes>
   );
 }

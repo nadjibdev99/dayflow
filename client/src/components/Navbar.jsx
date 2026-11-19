@@ -9,6 +9,7 @@ export default function Navbar() {
       <strong>🍅 DayFlow</strong>
       <Link to="/">Dashboard</Link>
       <Link to="/tasks">Tasks</Link>
+      <Link to="/notes">Notes</Link>
       <span style={{ marginLeft: "auto" }}>{user?.name}</span>
       <button onClick={logout}>Logout</button>
     </nav>
