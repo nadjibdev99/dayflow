@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import Notes from "./pages/Notes";
+import Pomodoro from "./pages/Pomodoro";
 
 export default function App() {
   return (
@@ -34,6 +35,14 @@ export default function App() {
             <Notes />
           </ProtectedRoute>
   }   />
+        <Route
+        path="/pomodoro"
+        element={
+          <ProtectedRoute>
+            <Pomodoro />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }

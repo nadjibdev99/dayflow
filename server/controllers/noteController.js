@@ -3,7 +3,7 @@ import Note from "../models/Note.js";
 // "c++" or "(" typed in search must not be treated as regex syntax
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// GET /api/notes?search=&subject=
+// GET /api/notes?search=&subject=&pinned=true
 export const getNotes = async (req, res) => {
   try {
     const { search = "", subject = "" } = req.query;
@@ -16,10 +16,12 @@ export const getNotes = async (req, res) => {
     if (subject.trim()) {
       query.subject = subject.trim().toLowerCase();
     }
+    if (req.query.pinned === "true") {
+      query.isPinned = true;
+    }
 
     const [notes, subjects] = await Promise.all([
-      Note.find(query).sort({ updatedAt: -1 }).lean(),
-      // all subjects this user has used, for the filter dropdown
+      Note.find(query).sort({ isPinned: -1, updatedAt: -1 }).lean(),
       Note.distinct("subject", { user: req.user, subject: { $ne: "" } }),
     ]);
 
@@ -45,11 +47,11 @@ export const createNote = async (req, res) => {
   }
 };
 
-// PUT /api/notes/:id  (used by auto-save)
+// PUT /api/notes/:id  (auto-save and pin)
 export const updateNote = async (req, res) => {
   try {
     const updates = {};
-    for (const key of ["title", "content", "subject"]) {
+    for (const key of ["title", "content", "subject", "isPinned"]) {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     }
 

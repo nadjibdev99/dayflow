@@ -10,6 +10,7 @@ const noteSchema = new mongoose.Schema(
     title: { type: String, default: "", trim: true, maxlength: 200 },
     content: { type: String, default: "", maxlength: 100000 },
     subject: { type: String, default: "", trim: true, lowercase: true, maxlength: 50 },
+    isPinned: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

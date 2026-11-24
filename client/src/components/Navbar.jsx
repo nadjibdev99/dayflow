@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import MiniTimer from "./MiniTimer";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -10,6 +11,8 @@ export default function Navbar() {
       <Link to="/">Dashboard</Link>
       <Link to="/tasks">Tasks</Link>
       <Link to="/notes">Notes</Link>
+      <Link to="/pomodoro">Pomodoro</Link>
+      <MiniTimer />
       <span style={{ marginLeft: "auto" }}>{user?.name}</span>
       <button onClick={logout}>Logout</button>
     </nav>
