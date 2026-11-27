@@ -9,30 +9,30 @@ export default function TaskForm({ onAdd, inputRef }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
-
     await onAdd({ title, priority, dueDate: dueDate || null });
-
     setTitle("");
     setPriority("medium");
     setDueDate(todayString());
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+    <form onSubmit={handleSubmit} className="task-form">
       <input
         ref={inputRef}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="New task... (press T)"
-        style={{ flex: 1, minWidth: 200 }}
+        placeholder="What needs to be done?"
+        aria-label="Task title"
       />
-      <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-        <option value="low">Low</option>
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
-      </select>
-      <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-      <button>Add</button>
+      <div className="row">
+        <select value={priority} onChange={(e) => setPriority(e.target.value)} aria-label="Priority">
+          <option value="low">Low priority</option>
+          <option value="medium">Medium priority</option>
+          <option value="high">High priority</option>
+        </select>
+        <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} aria-label="Due date" />
+        <button className="btn btn-primary" style={{ marginLeft: "auto" }}>Add task</button>
+      </div>
     </form>
   );
 }

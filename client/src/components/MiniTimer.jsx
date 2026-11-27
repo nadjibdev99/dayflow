@@ -6,9 +6,22 @@ export default function MiniTimer() {
 
   if (status === "idle") return null;
 
+  const cls = [
+    "timer-chip",
+    mode !== "focus" && "is-break",
+    status === "paused" && "is-paused",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <Link to="/pomodoro" style={{ fontWeight: 600 }}>
-      🍅 {timeText} ({MODE_LABELS[mode]}){status === "paused" && " ⏸"}
+    <Link to="/pomodoro" className={cls} title="Open timer">
+      <span className="dot" />
+      {timeText}
+      <span className="timer-chip-label">
+        {MODE_LABELS[mode]}
+        {status === "paused" && " · paused"}
+      </span>
     </Link>
   );
 }

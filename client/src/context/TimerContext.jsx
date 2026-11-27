@@ -12,6 +12,8 @@ import {
   askNotificationPermission,
   showNotification,
 } from "../utils/notify";
+import { useAuth } from "./AuthContext";
+import { enqueueSession, syncSessions, makeSession } from "../utils/sessionQueue";
 
 const TimerContext = createContext();
 export const useTimer = () => useContext(TimerContext);
@@ -75,6 +77,15 @@ const finish = (s, settings) => {
   };
 };
 
+// save a finished FOCUS session (breaks are never saved)
+const recordFocus = (s, settings) => {
+  if (s.mode !== "focus") return;
+  const ms = s.totalMs || durationMs("focus", settings);
+  enqueueSession(
+    makeSession({ label: s.label, minutes: ms / 60000, endTime: s.endTime })
+  );
+};
+
 const loadTimer = (settings) => {
   const base = {
     mode: "focus",
@@ -92,9 +103,11 @@ const loadTimer = (settings) => {
 
   if (s.status === "running") {
     if (typeof s.endTime !== "number") return base;
-    // the session ended while the page was closed: finish it silently
-    // PHASE 5: this is also a finished focus session, we will save it later
-    if (s.endTime <= Date.now()) return finish(s, settings);
+    // the session ended while the page was closed: save it and finish silently
+    if (s.endTime <= Date.now()) {
+      recordFocus(s, settings);
+      return finish(s, settings);
+    }
   }
   if (s.status === "idle") s.remainingMs = durationMs(s.mode, settings);
 
@@ -102,6 +115,7 @@ const loadTimer = (settings) => {
 };
 
 export function TimerProvider({ children }) {
+  const { user } = useAuth();
   const [settings, setSettings] = useState(loadSettings);
   const [timer, setTimer] = useState(() => loadTimer(loadSettings()));
   const [now, setNow] = useState(Date.now());
@@ -114,6 +128,11 @@ export function TimerProvider({ children }) {
     timerRef.current = next;
     setTimer(next);
   }, []);
+
+  // send pending sessions when the app loads or the user logs in
+  useEffect(() => {
+    if (user) syncSessions();
+  }, [user]);
 
   // save the timer on every change, so a refresh restores it
   useEffect(() => {
@@ -140,7 +159,8 @@ export function TimerProvider({ children }) {
       s.mode === "focus" ? "Time for a break." : "Ready to focus?"
     );
 
-    // PHASE 5: if (s.mode === "focus") save a session here (label + duration)
+    recordFocus(s, settingsRef.current);
+    syncSessions();
 
     update(finish(s, settingsRef.current));
   }, [update]);
@@ -163,7 +183,13 @@ export function TimerProvider({ children }) {
     askNotificationPermission();
     const t = Date.now();
     setNow(t);
-    update({ ...s, status: "running", endTime: t + s.remainingMs });
+    update({
+      ...s,
+      status: "running",
+      endTime: t + s.remainingMs,
+      // remember the full length of this session (kept across pause/resume)
+      totalMs: s.status === "idle" ? s.remainingMs : s.totalMs || s.remainingMs,
+    });
   }, [update]);
 
   const pause = useCallback(() => {

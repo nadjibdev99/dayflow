@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
+import Icon from "../components/Icon";
 import NoteList from "../components/NoteList";
 import NoteEditor from "../components/NoteEditor";
 import useDebounce from "../hooks/useDebounce";
 import useHotkeys from "../hooks/useHotkeys";
 
 export default function Notes() {
+  const [params] = useSearchParams();
   const [notes, setNotes] = useState([]);
   const [subjects, setSubjects] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedId] = useState(params.get("open"));
   const [search, setSearch] = useState("");
   const [subject, setSubject] = useState("");
   const [loading, setLoading] = useState(true);
@@ -21,9 +24,7 @@ export default function Notes() {
   const fetchNotes = useCallback(async () => {
     try {
       setError("");
-      const { data } = await api.get("/notes", {
-        params: { search: debouncedSearch, subject },
-      });
+      const { data } = await api.get("/notes", { params: { search: debouncedSearch, subject } });
       setNotes(data.notes);
       setSubjects(data.subjects);
     } catch (err) {
@@ -41,7 +42,6 @@ export default function Notes() {
     try {
       const { data } = await api.post("/notes", { subject });
       setSelectedId(data.note._id);
-      // clear filters so the new note is visible in the list
       setSearch("");
       await fetchNotes();
       setTimeout(() => titleRef.current?.focus(), 0);
@@ -52,12 +52,8 @@ export default function Notes() {
 
   useHotkeys("n", newNote);
 
-  // called by the editor after each successful auto-save
   const handleSaved = (saved) => {
-    setNotes((prev) => {
-      const rest = prev.filter((n) => n._id !== saved._id);
-      return [saved, ...rest]; // most recently edited first
-    });
+    setNotes((prev) => [saved, ...prev.filter((n) => n._id !== saved._id)]);
     if (saved.subject && !subjects.includes(saved.subject)) {
       setSubjects((prev) => [...prev, saved.subject].sort());
     }
@@ -79,38 +75,53 @@ export default function Notes() {
   return (
     <>
       <Navbar />
-      <div style={{ maxWidth: 1000, margin: "30px auto", padding: "0 16px" }}>
-        <h1>Notes</h1>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+      <main className="page">
+        <div className="page-header">
+          <div>
+            <h1>Notes</h1>
+            <p>Press <kbd>N</kbd> to start a new note. Everything saves automatically.</p>
+          </div>
+          <button className="btn btn-primary" onClick={newNote}>
+            <Icon name="plus" /> New note
+          </button>
+        </div>
+
+        {error && <div className="error-box">{error}</div>}
+
         {loading ? (
-          <p>Loading...</p>
+          <div className="skeleton" style={{ height: 240 }} />
         ) : (
-          <div style={{ display: "flex", gap: 20 }}>
-            <NoteList
-              notes={notes}
-              selectedId={selectedId}
-              search={search}
-              onSearch={setSearch}
-              subject={subject}
-              onSubject={setSubject}
-              subjects={subjects}
-              onSelect={setSelectedId}
-              onNew={newNote}
-            />
-            {selected ? (
-              <NoteEditor
-                key={selected._id}
-                note={selected}
-                onSaved={handleSaved}
-                onDelete={handleDelete}
-                titleRef={titleRef}
+          <div className={`notes-layout${selected ? " has-selection" : ""}`}>
+            <aside className="card note-list-col">
+              <NoteList
+                notes={notes}
+                selectedId={selectedId}
+                search={search}
+                onSearch={setSearch}
+                subject={subject}
+                onSubject={setSubject}
+                subjects={subjects}
+                onSelect={setSelectedId}
               />
-            ) : (
-              <p style={{ color: "#666" }}>Select a note or press N to create one.</p>
-            )}
+            </aside>
+
+            <section className="card note-editor-col">
+              {selected ? (
+                <NoteEditor
+                  key={selected._id}
+                  note={selected}
+                  onSaved={handleSaved}
+                  onDelete={handleDelete}
+                  onBack={() => setSelectedId(null)}
+                  titleRef={titleRef}
+                />
+              ) : (
+                <div className="empty">Select a note, or create a new one.</div>
+              )}
+            </section>
           </div>
         )}
-      </div>
+      </main>
     </>
   );
 }

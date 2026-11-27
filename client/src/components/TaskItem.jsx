@@ -1,47 +1,40 @@
-const COLORS = { high: "#e5533d", medium: "#f0a020", low: "#3aa76d" };
+import Icon from "./Icon";
 
-export default function TaskItem({
-  task,
-  showDate,
-  inHistory,
-  onToggle,
-  onDelete,
-  onRestore,
-  onPurge,
-}) {
+const shortDate = (s) => {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+};
+
+export default function TaskItem({ task, showDate, inHistory, onToggle, onDelete, onRestore, onPurge }) {
   return (
-    <li style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
+    <li className={`task${task.isCompleted ? " is-done" : ""}`}>
       {!inHistory && (
         <input
           type="checkbox"
           checked={task.isCompleted}
           onChange={() => onToggle(task)}
+          aria-label={`Mark "${task.title}" as done`}
         />
       )}
 
-      <span
-        style={{
-          flex: 1,
-          opacity: task.isCompleted || inHistory ? 0.6 : 1,
-          textDecoration: task.isCompleted ? "line-through" : "none",
-        }}
-      >
+      <span className="task-title" style={inHistory ? { opacity: 0.6 } : undefined}>
         {task.title}
       </span>
 
-      {showDate && task.dueDate && <small>{task.dueDate}</small>}
-
-      <span style={{ color: COLORS[task.priority], fontWeight: 600 }}>
-        {task.priority}
-      </span>
+      {showDate && task.dueDate && <span className="date-chip">{shortDate(task.dueDate)}</span>}
+      <span className={`prio ${task.priority}`}>{task.priority}</span>
 
       {inHistory ? (
-        <>
+        <div className="task-actions">
           <button onClick={() => onRestore(task._id)}>Restore</button>
           <button onClick={() => onPurge(task._id)}>Delete forever</button>
-        </>
+        </div>
       ) : (
-        <button onClick={() => onDelete(task._id)}>✕</button>
+        <div className="row-actions">
+          <button className="icon-btn danger" onClick={() => onDelete(task)} aria-label="Delete task" title="Delete">
+            <Icon name="trash" />
+          </button>
+        </div>
       )}
     </li>
   );

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../api/axios";
+import Icon from "./Icon";
 
 const SAVE_DELAY = 1000;
 
-export default function NoteEditor({ note, onSaved, onDelete, titleRef }) {
+export default function NoteEditor({ note, onSaved, onDelete, onBack, titleRef }) {
   const [form, setForm] = useState({
     title: note.title,
     content: note.content,
@@ -11,9 +12,9 @@ export default function NoteEditor({ note, onSaved, onDelete, titleRef }) {
   });
   const [status, setStatus] = useState("saved"); // saved | pending | saving | error
 
-  const formRef = useRef(form);   // always the latest text
-  const timerRef = useRef(null);  // the debounce timer
-  const dirtyRef = useRef(false); // true when there are unsaved changes
+  const formRef = useRef(form);
+  const timerRef = useRef(null);
+  const dirtyRef = useRef(false);
 
   const save = async () => {
     clearTimeout(timerRef.current);
@@ -24,15 +25,13 @@ export default function NoteEditor({ note, onSaved, onDelete, titleRef }) {
     try {
       const { data } = await api.put(`/notes/${note._id}`, formRef.current);
       onSaved(data.note);
-      // if the user typed again while saving, a new timer is already running
       if (!dirtyRef.current) setStatus("saved");
     } catch {
-      dirtyRef.current = true; // keep the text, retry on the next change
+      dirtyRef.current = true;
       setStatus("error");
     }
   };
 
-  // keep the latest save function available to the cleanup below
   const saveRef = useRef(save);
   saveRef.current = save;
 
@@ -47,14 +46,13 @@ export default function NoteEditor({ note, onSaved, onDelete, titleRef }) {
     timerRef.current = setTimeout(() => saveRef.current(), SAVE_DELAY);
   };
 
-  // when this editor goes away (switching notes), save pending changes first
+  // leaving this note (or the page) saves pending changes first
   useEffect(() => {
     return () => {
       if (dirtyRef.current) saveRef.current();
     };
   }, []);
 
-  // warn if the user closes the tab with unsaved changes
   useEffect(() => {
     const warn = (e) => {
       if (dirtyRef.current) {
@@ -66,39 +64,64 @@ export default function NoteEditor({ note, onSaved, onDelete, titleRef }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
 
+  const togglePin = async () => {
+    try {
+      const { data } = await api.put(`/notes/${note._id}`, { isPinned: !note.isPinned });
+      onSaved(data.note);
+    } catch {
+      setStatus("error");
+    }
+  };
+
   const statusText = {
-    saved: "Saved ✓",
-    pending: "Unsaved changes...",
-    saving: "Saving...",
-    error: "Error: not saved (will retry when you type)",
+    saved: "Saved",
+    pending: "Unsaved changes…",
+    saving: "Saving…",
+    error: "Not saved. Will retry when you type",
   }[status];
 
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className="editor">
+      <div className="editor-top">
+        <button className="btn back-btn" onClick={onBack}>← Notes</button>
+      </div>
+
       <input
         ref={titleRef}
+        className="bare note-title"
         name="title"
         value={form.title}
         onChange={handleChange}
-        placeholder="Title"
-        style={{ fontSize: 20, fontWeight: 600 }}
+        placeholder="Untitled"
+        aria-label="Title"
       />
       <input
+        className="bare note-subject"
         name="subject"
         value={form.subject}
         onChange={handleChange}
-        placeholder="Subject (study, work, ideas...)"
+        placeholder="Add a subject (study, work, ideas…)"
+        aria-label="Subject"
       />
       <textarea
+        className="bare note-body"
         name="content"
         value={form.content}
         onChange={handleChange}
-        placeholder="Write your note..."
-        style={{ minHeight: 350, resize: "vertical" }}
+        placeholder="Start writing…"
+        aria-label="Content"
       />
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <small style={{ color: status === "error" ? "red" : "#666" }}>{statusText}</small>
-        <button onClick={() => onDelete(note._id)}>Delete note</button>
+
+      <div className="editor-bar">
+        <span className={`save-status ${status}`}>{statusText}</span>
+        <span style={{ display: "flex", gap: 6 }}>
+          <button className="btn" onClick={togglePin}>
+            <Icon name="pin" /> {note.isPinned ? "Unpin" : "Pin"}
+          </button>
+          <button className="icon-btn danger" onClick={() => onDelete(note._id)} aria-label="Delete note" title="Delete note">
+            <Icon name="trash" />
+          </button>
+        </span>
       </div>
     </div>
   );

@@ -89,3 +89,38 @@ export const getStats = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// PUT /api/sessions/relabel
+// body: { from, to, weekStart, weekEnd }
+// Changes the label of every session in that week that has the label `from`.
+export const relabelSessions = async (req, res) => {
+  try {
+    const { from = "", to = "", weekStart, weekEnd } = req.body;
+
+    if (![weekStart, weekEnd].every(isValidDate)) {
+      return res.status(400).json({ message: "weekStart and weekEnd are required" });
+    }
+    if (typeof from !== "string" || typeof to !== "string") {
+      return res.status(400).json({ message: "Invalid label" });
+    }
+
+    const newLabel = to.trim().toLowerCase();
+    if (newLabel.length > 100) {
+      return res.status(400).json({ message: "Label is too long" });
+    }
+
+    const result = await Session.updateMany(
+      {
+        user: req.user,
+        label: from.trim().toLowerCase(),
+        date: { $gte: weekStart, $lte: weekEnd },
+      },
+      { $set: { label: newLabel } }
+    );
+
+    res.json({ updated: result.modifiedCount });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

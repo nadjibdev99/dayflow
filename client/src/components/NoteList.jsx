@@ -1,62 +1,44 @@
-export default function NoteList({
-  notes,
-  selectedId,
-  search,
-  onSearch,
-  subject,
-  onSubject,
-  subjects,
-  onSelect,
-  onNew,
-}) {
+import Icon from "./Icon";
+
+export default function NoteList({ notes, selectedId, search, onSearch, subject, onSubject, subjects, onSelect }) {
   return (
-    <div style={{ width: 280, borderRight: "1px solid #ddd", paddingRight: 12 }}>
-      <button onClick={onNew} style={{ width: "100%", marginBottom: 8 }}>
-        + New note (N)
-      </button>
+    <>
+      <div className="note-filters">
+        <input
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder="Search notes…"
+          aria-label="Search notes"
+        />
+        <select value={subject} onChange={(e) => onSubject(e.target.value)} aria-label="Subject">
+          <option value="">All subjects</option>
+          {subjects.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
 
-      <input
-        value={search}
-        onChange={(e) => onSearch(e.target.value)}
-        placeholder="Search by title..."
-        style={{ width: "100%", marginBottom: 8 }}
-      />
+      {notes.length === 0 && <div className="empty">No notes yet.</div>}
 
-      <select
-        value={subject}
-        onChange={(e) => onSubject(e.target.value)}
-        style={{ width: "100%", marginBottom: 12 }}
-      >
-        <option value="">All subjects</option>
-        {subjects.map((s) => (
-          <option key={s} value={s}>
-            {s}
-          </option>
-        ))}
-      </select>
-
-      {notes.length === 0 && <p style={{ color: "#666" }}>No notes yet.</p>}
-
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+      <ul className="note-items">
         {notes.map((note) => (
           <li
             key={note._id}
+            className={`note-item${note._id === selectedId ? " is-active" : ""}`}
             onClick={() => onSelect(note._id)}
-            style={{
-              padding: "8px 10px",
-              cursor: "pointer",
-              borderRadius: 6,
-              background: note._id === selectedId ? "#eef" : "transparent",
-            }}
           >
-            <div style={{ fontWeight: 600 }}>{note.title || "Untitled"}</div>
-            <small style={{ color: "#666" }}>
+            <div className="note-item-title">
+              {note.isPinned && <Icon name="pin" />}
+              {note.title || "Untitled"}
+            </div>
+            {note.content && <div className="note-item-preview">{note.content.slice(0, 80)}</div>}
+            <div className="note-item-meta">
               {note.subject && `${note.subject} · `}
               {new Date(note.updatedAt).toLocaleDateString()}
-            </small>
+            </div>
           </li>
         ))}
       </ul>
-    </div>
+    </>
   );
 }

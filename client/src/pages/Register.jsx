@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { Logo } from "../components/Icon";
 
 export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -9,8 +10,7 @@ export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,21 +27,37 @@ export default function Register() {
   };
 
   return (
-    <div style={{ maxWidth: 360, margin: "80px auto" }}>
-      <h1>Create account</h1>
-      <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Name" value={form.name} onChange={handleChange} />
-        <br />
-        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} />
-        <br />
-        <input name="password" type="password" placeholder="Password (min 6)" value={form.password} onChange={handleChange} />
-        <br />
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button disabled={submitting}>{submitting ? "Creating..." : "Register"}</button>
-      </form>
-      <p>
-        Already have an account? <Link to="/login">Login</Link>
-      </p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="brand"><Logo />DayFlow</div>
+        <h1>Create your account</h1>
+        <p className="auth-subtitle">Tasks, notes and focus time in one place.</p>
+
+        <form onSubmit={handleSubmit}>
+          {error && <div className="error-box">{error}</div>}
+
+          <div className="field">
+            <label htmlFor="name">Name</label>
+            <input id="name" name="name" placeholder="Your name" value={form.name} onChange={handleChange} required />
+          </div>
+          <div className="field">
+            <label htmlFor="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="you@example.com" value={form.email} onChange={handleChange} required />
+          </div>
+          <div className="field">
+            <label htmlFor="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="At least 6 characters" value={form.password} onChange={handleChange} required minLength={6} />
+          </div>
+
+          <button className="btn btn-primary btn-block" disabled={submitting}>
+            {submitting ? "Creating…" : "Create account"}
+          </button>
+        </form>
+
+        <p className="auth-footer">
+          Already have an account? <Link to="/login">Log in</Link>
+        </p>
+      </div>
     </div>
   );
 }

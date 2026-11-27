@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { Logo } from "../components/Icon";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -9,8 +10,7 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,19 +27,33 @@ export default function Login() {
   };
 
   return (
-    <div style={{ maxWidth: 360, margin: "80px auto" }}>
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit}>
-        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} />
-        <br />
-        <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} />
-        <br />
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button disabled={submitting}>{submitting ? "Logging in..." : "Login"}</button>
-      </form>
-      <p>
-        No account? <Link to="/register">Register</Link>
-      </p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="brand"><Logo />DayFlow</div>
+        <h1>Welcome back</h1>
+        <p className="auth-subtitle">Log in to plan your day and focus.</p>
+
+        <form onSubmit={handleSubmit}>
+          {error && <div className="error-box">{error}</div>}
+
+          <div className="field">
+            <label htmlFor="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="you@example.com" value={form.email} onChange={handleChange} required />
+          </div>
+          <div className="field">
+            <label htmlFor="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="Your password" value={form.password} onChange={handleChange} required />
+          </div>
+
+          <button className="btn btn-primary btn-block" disabled={submitting}>
+            {submitting ? "Logging in…" : "Log in"}
+          </button>
+        </form>
+
+        <p className="auth-footer">
+          No account? <Link to="/register">Create one</Link>
+        </p>
+      </div>
     </div>
   );
 }
